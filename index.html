@@ -8,58 +8,67 @@
     <style>
         :root {
             --bg:#f5f6fa; --surface:#ffffff; --border:#e2e4ec;
-            --text:#1e1f2e; --muted:#9395a5; --accent:#6c63ff;
+            --text:#1e1f2e; --muted:#9395a5; --accent:#6c63ff; --expense:#f43f5e;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Nunito','Noto Sans KR','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
         
-        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        /* Layout */
+        #mainScreen, #editScreen { display: none; flex-direction: column; height: 100vh; }
         .topbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
         .logo { font-weight: 800; font-size: 1.2rem; color: var(--accent); }
 
+        /* Main Grid */
         .main-grid { display: grid; grid-template-columns: 300px 1fr 350px; flex: 1; overflow: hidden; background: var(--border); gap: 1px; }
         .panel { background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
-        .panel-head { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 700; background: #fafaff; }
+        .panel-head { padding: 15px; border-bottom: 1px solid var(--border); font-weight: 700; background: #fafaff; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 목록 */
-        .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        /* List Items */
+        .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
         .list-item:hover { background: #f8f9ff; }
         .list-item.active { background: #f0f1ff; border-left: 4px solid var(--accent); }
-        .list-item .title { font-weight: 700; margin-bottom: 5px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-item .title { font-weight: 700; margin-bottom: 5px; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .list-item .date { font-size: 0.75rem; color: var(--muted); }
 
-        /* 뷰어 */
-        .viewer { padding: 30px; overflow-y: auto; flex: 1; }
-        .viewer h2 { margin-bottom: 20px; font-size: 1.5rem; }
-        .jp-text { font-size: 1.25rem; line-height: 2.2; margin-bottom: 30px; white-space: pre-wrap; }
-        .ko-text { color: #666; border-top: 1px dashed var(--border); padding-top: 20px; line-height: 1.8; white-space: pre-wrap; }
+        /* Viewer */
+        .viewer { padding: 40px; overflow-y: auto; flex: 1; }
+        .viewer h2 { margin-bottom: 25px; font-size: 1.6rem; color: var(--text); }
+        .jp-text { font-size: 1.3rem; line-height: 2.3; margin-bottom: 40px; white-space: pre-wrap; color: #2c3e50; }
+        .ko-text { color: #7f8c8d; border-top: 1px dashed var(--border); padding-top: 25px; line-height: 1.8; white-space: pre-wrap; font-size: 1.05rem; }
 
-        /* 단어장 */
-        .vocab-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .vocab-item { padding: 15px; background: #f9f9ff; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--border); position: relative; }
-        .vocab-word { font-weight: 800; color: var(--accent); font-size: 1.1rem; margin-bottom: 5px; }
+        /* Vocab List */
+        .vocab-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .vocab-card { padding: 15px; background: #f9f9ff; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border); position: relative; }
+        .vocab-word { font-weight: 800; color: var(--accent); font-size: 1.1rem; margin-bottom: 6px; }
         .vocab-sent { font-size: 0.85rem; color: #555; line-height: 1.5; }
-        .btn-del { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--muted); cursor: pointer; padding: 5px; }
-        .btn-del:hover { color: #f43f5e; }
 
-        /* 모달 */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background: var(--surface); padding: 25px; border-radius: 16px; width: 500px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .form-control { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; font-family: inherit; outline: none; }
-        .form-control:focus { border-color: var(--accent); }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; font-family: inherit; transition: 0.2s; }
+        /* Edit Screen Form */
+        .edit-container { flex: 1; overflow-y: auto; padding: 40px 20px; background: var(--bg); display: flex; justify-content: center; }
+        .edit-card { background: var(--surface); width: 100%; max-width: 900px; padding: 40px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.05); height: fit-content; }
+        .form-section { margin-bottom: 30px; }
+        .form-label { display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: var(--text); }
+        .form-control { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; transition: 0.2s; }
+        .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1); }
+        
+        /* Dynamic Vocab Row */
+        .vocab-row { display: grid; grid-template-columns: 200px 1fr 40px; gap: 10px; margin-bottom: 10px; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Buttons */
+        .btn { padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-family: inherit; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-ghost { background: #eee; color: #333; }
-        .btn-ghost:hover { background: #e2e2e2; }
+        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-ghost:hover { background: #f8f9ff; color: var(--text); }
+        .btn-danger { background: #fff1f2; color: var(--expense); border: 1px solid #fee2e2; }
+        .btn-danger:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div id="mainScreen" style="display: flex;">
     <div class="topbar">
         <div class="logo">📒 일본어 학습장</div>
-        <button class="btn btn-primary" onclick="showModal('articleModal')">+ 새 기사 작성</button>
+        <button class="btn btn-primary" onclick="goEdit()">+ 새 기사 작성</button>
     </div>
 
     <div class="main-grid">
@@ -76,133 +85,137 @@
         </div>
 
         <div class="panel">
-            <div class="panel-head">
-                단어장
-                <button class="btn btn-primary" style="padding:4px 10px; font-size:0.75rem;" onclick="showModal('vocabModal')">+ 단어 추가</button>
-            </div>
+            <div class="panel-head">단어장</div>
             <div id="vocabList" class="vocab-list"></div>
         </div>
     </div>
 </div>
 
-<div class="modal-overlay" id="articleModal">
-    <div class="modal">
-        <h3 style="margin-bottom:15px">새 기사 작성</h3>
-        <input type="text" id="artTitle" class="form-control" placeholder="기사 제목을 입력하세요">
-        <textarea id="artJp" class="form-control" style="height:150px" placeholder="일본어 본문을 입력하세요"></textarea>
-        <textarea id="artKo" class="form-control" style="height:100px" placeholder="한국어 해석을 입력하세요"></textarea>
-        <div style="display:flex; gap:10px; justify-content:flex-end">
-            <button class="btn btn-ghost" onclick="hideModal('articleModal')">취소</button>
-            <button class="btn btn-primary" onclick="saveArticle()">기사 저장</button>
+<div id="editScreen">
+    <div class="topbar">
+        <div class="logo" onclick="goMain()" style="cursor:pointer">🔙 뒤로가기</div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-ghost" onclick="goMain()">취소</button>
+            <button class="btn btn-primary" onclick="saveData()">등록 완료</button>
         </div>
     </div>
-</div>
 
-<div class="modal-overlay" id="vocabModal">
-    <div class="modal">
-        <h3 style="margin-bottom:15px">모르는 단어 기록</h3>
-        <input type="text" id="vocWord" class="form-control" placeholder="단어 (예: 勉強)">
-        <textarea id="vocSent" class="form-control" style="height:100px" placeholder="단어가 쓰인 문장을 기록하세요"></textarea>
-        <div style="display:flex; gap:10px; justify-content:flex-end">
-            <button class="btn btn-ghost" onclick="hideModal('vocabModal')">취소</button>
-            <button class="btn btn-primary" onclick="saveVocab()">단어 저장</button>
+    <div class="edit-container">
+        <div class="edit-card">
+            <h2 style="margin-bottom:30px;">새 학습 데이터 등록</h2>
+            
+            <div class="form-section">
+                <label class="form-label">기사 제목</label>
+                <input type="text" id="editTitle" class="form-control" placeholder="예: NHK 뉴스 - 일본의 날씨 변화">
+            </div>
+
+            <div class="form-section" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <div>
+                    <label class="form-label">일본어 본문</label>
+                    <textarea id="editJp" class="form-control" style="height:250px; line-height:1.6;" placeholder="일본어 원문을 입력하세요..."></textarea>
+                </div>
+                <div>
+                    <label class="form-label">한국어 해석</label>
+                    <textarea id="editKo" class="form-control" style="height:250px; line-height:1.6;" placeholder="해석을 입력하세요..."></textarea>
+                </div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border); margin:40px 0;">
+
+            <div class="form-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <label class="form-label" style="margin-bottom:0;">공부하고 싶은 단어 기록</label>
+                    <button class="btn btn-ghost" style="padding:5px 12px; font-size:0.8rem;" onclick="addVocabRow()">+ 단어 칸 추가</button>
+                </div>
+                <div id="vocabInputs">
+                    </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 로컬 스토리지 데이터 불러오기
     let articles = JSON.parse(localStorage.getItem('my_articles') || '[]');
     let vocabulary = JSON.parse(localStorage.getItem('my_vocabulary') || '[]');
-    let currentId = null;
+    let currentArticleId = null;
 
-    // 모달 제어 함수
-    function showModal(id) {
-        document.getElementById(id).style.display = 'flex';
+    // 화면 전환
+    function goEdit() {
+        document.getElementById('mainScreen').style.display = 'none';
+        document.getElementById('editScreen').style.display = 'flex';
+        // 폼 초기화
+        document.getElementById('editTitle').value = '';
+        document.getElementById('editJp').value = '';
+        document.getElementById('editKo').value = '';
+        document.getElementById('vocabInputs').innerHTML = '';
+        addVocabRow(); // 기본 한 줄 추가
     }
 
-    function hideModal(id) {
-        document.getElementById(id).style.display = 'none';
-        // 입력창 초기화
-        if(id === 'articleModal') {
-            document.getElementById('artTitle').value = '';
-            document.getElementById('artJp').value = '';
-            document.getElementById('artKo').value = '';
-        } else {
-            document.getElementById('vocWord').value = '';
-            document.getElementById('vocSent').value = '';
-        }
-    }
-
-    // 기사 저장 함수
-    function saveArticle() {
-        const title = document.getElementById('artTitle').value.trim();
-        const jp = document.getElementById('artJp').value.trim();
-        const ko = document.getElementById('artKo').value.trim();
-
-        if(!title || !jp) {
-            alert('제목과 본문은 필수입니다.');
-            return;
-        }
-
-        const newArt = {
-            id: Date.now(),
-            title: title,
-            jp: jp,
-            ko: ko,
-            date: new Date().toLocaleDateString()
-        };
-
-        articles.unshift(newArt);
-        localStorage.setItem('my_articles', JSON.stringify(articles));
-        
-        hideModal('articleModal');
+    function goMain() {
+        document.getElementById('editScreen').style.display = 'none';
+        document.getElementById('mainScreen').style.display = 'flex';
         renderArticles();
-        selectArticle(newArt.id); // 저장 후 바로 해당 기사 보기
-    }
-
-    // 단어 저장 함수
-    function saveVocab() {
-        const word = document.getElementById('vocWord').value.trim();
-        const sent = document.getElementById('vocSent').value.trim();
-
-        if(!word) {
-            alert('단어를 입력해 주세요.');
-            return;
-        }
-
-        const newVoc = {
-            id: Date.now(),
-            word: word,
-            sent: sent,
-            articleId: currentId // 현재 보고 있는 기사와 연결 (필요 시 활용)
-        };
-
-        vocabulary.unshift(newVoc);
-        localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
-        
-        hideModal('vocabModal');
         renderVocab();
     }
 
-    // 목록 렌더링
+    // 단어 입력 줄 추가
+    function addVocabRow() {
+        const div = document.createElement('div');
+        div.className = 'vocab-row';
+        div.innerHTML = `
+            <input type="text" class="form-control voc-w" placeholder="단어">
+            <input type="text" class="form-control voc-s" placeholder="문장 속 쓰임">
+            <button class="btn btn-danger" style="padding:0;" onclick="this.parentElement.remove()">✕</button>
+        `;
+        document.getElementById('vocabInputs').appendChild(div);
+    }
+
+    // 데이터 저장
+    function saveData() {
+        const title = document.getElementById('editTitle').value.trim();
+        const jp = document.getElementById('editJp').value.trim();
+        const ko = document.getElementById('editKo').value.trim();
+        const artId = Date.now();
+
+        if(!title || !jp) return alert('제목과 본문은 필수입니다.');
+
+        // 1. 기사 저장
+        const newArt = { id: artId, title, jp, ko, date: new Date().toLocaleDateString() };
+        articles.unshift(newArt);
+        localStorage.setItem('my_articles', JSON.stringify(articles));
+
+        // 2. 단어 저장
+        const rows = document.querySelectorAll('.vocab-row');
+        rows.forEach(row => {
+            const word = row.querySelector('.voc-w').value.trim();
+            const sent = row.querySelector('.voc-s').value.trim();
+            if(word) {
+                vocabulary.unshift({ id: Date.now() + Math.random(), word, sent, articleId: artId });
+            }
+        });
+        localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
+
+        goMain();
+        selectArticle(artId);
+    }
+
+    // 렌더링 함수들
     function renderArticles() {
         const list = document.getElementById('articleList');
-        if (articles.length === 0) {
+        if(articles.length === 0) {
             list.innerHTML = '<div style="padding:20px; color:var(--muted); font-size:0.85rem; text-align:center;">작성된 기사가 없습니다.</div>';
             return;
         }
         list.innerHTML = articles.map(a => `
-            <div class="list-item ${currentId === a.id ? 'active' : ''}" onclick="selectArticle(${a.id})">
+            <div class="list-item ${currentArticleId === a.id ? 'active' : ''}" onclick="selectArticle(${a.id})">
                 <div class="title">${a.title}</div>
                 <div class="date">${a.date}</div>
             </div>
         `).join('');
     }
 
-    // 기사 선택 시 뷰어 업데이트
     function selectArticle(id) {
-        currentId = id;
+        currentArticleId = id;
         const art = articles.find(a => a.id === id);
         if(!art) return;
 
@@ -212,36 +225,30 @@
             <div class="jp-text">${art.jp}</div>
             <div class="ko-text">${art.ko}</div>
         `;
+        renderVocab();
     }
 
-    // 단어장 렌더링
     function renderVocab() {
         const list = document.getElementById('vocabList');
-        if (vocabulary.length === 0) {
-            list.innerHTML = '<div style="padding:20px; color:var(--muted); font-size:0.85rem; text-align:center;">저장된 단어가 없습니다.</div>';
+        // 현재 선택된 기사에 해당하는 단어만 필터링해서 보여줌
+        const filtered = vocabulary.filter(v => v.articleId === currentArticleId);
+        
+        if (filtered.length === 0) {
+            list.innerHTML = '<div style="padding:20px; color:var(--muted); font-size:0.85rem; text-align:center;">이 기사에 등록된 단어가 없습니다.</div>';
             return;
         }
-        list.innerHTML = vocabulary.map(v => `
-            <div class="vocab-item">
-                <button class="btn-del" onclick="deleteVocab(${v.id})">✕</button>
+        list.innerHTML = filtered.map(v => `
+            <div class="vocab-card">
                 <div class="vocab-word">${v.word}</div>
                 <div class="vocab-sent">${v.sent}</div>
             </div>
         `).join('');
     }
 
-    // 단어 삭제
-    function deleteVocab(id) {
-        if(!confirm('이 단어를 삭제할까요?')) return;
-        vocabulary = vocabulary.filter(v => v.id !== id);
-        localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
-        renderVocab();
-    }
-
-    // 페이지 로드 시 초기 렌더링
-    window.onload = function() {
+    // 초기 로드
+    window.onload = () => {
         renderArticles();
-        renderVocab();
+        if(articles.length > 0) selectArticle(articles[0].id);
     };
 </script>
 
