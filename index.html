@@ -36,7 +36,23 @@
         .viewer-jp { font-size: 1.45rem; line-height: 2.2; color: #2c3e50; margin-bottom: 8px; font-family: 'Noto Sans JP', sans-serif; }
         .viewer-ko { font-size: 1.05rem; color: #888; line-height: 1.6; }
 
-        .highlight-word { border-bottom: 2px dashed var(--accent); cursor: help; color: var(--accent); font-weight: 700; }
+        /* 커스텀 호버 툴팁 스타일 */
+        .highlight-word { border-bottom: 2px dashed var(--accent); cursor: help; color: var(--accent); font-weight: 700; position: relative; display: inline-block; }
+        
+        #customTooltip {
+            position: fixed; display: none; z-index: 3000;
+            background: #333; color: white; padding: 6px 12px;
+            border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+            pointer-events: none; white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translate(-50%, -120%);
+        }
+        #customTooltip::after {
+            content: ""; position: absolute; bottom: -6px; left: 50%;
+            transform: translateX(-50%); border-width: 6px 6px 0;
+            border-style: solid; border-color: #333 transparent transparent;
+        }
+
         rt { font-family: 'Noto Sans JP', sans-serif; font-size: 0.55em; color: var(--accent); font-weight: 400; }
 
         .full-container { flex: 1; overflow-y: auto; padding: 40px 20px; background: var(--bg); display: flex; flex-direction: column; align-items: center; }
@@ -54,11 +70,9 @@
         .vocab-word { font-weight: 800; color: var(--accent); font-size: 1.3rem; margin-bottom: 5px; }
         .vocab-mean { font-weight: 700; color: #444; font-size: 1.1rem; }
         
-        /* 예문 보기 버튼 스타일 */
         .btn-ex-pop { position: absolute; top: 20px; right: 20px; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; background: #f0f0ff; color: var(--accent); border: 1px solid var(--accent); cursor: pointer; transition: 0.2s; font-weight: 700; }
         .btn-ex-pop:hover { background: var(--accent); color: #fff; }
 
-        /* 팝업(모달) 스타일 */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.2s; }
         .modal-box { background: white; width: 90%; max-width: 500px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; }
         .modal-word-title { font-size: 1.4rem; font-weight: 800; color: var(--accent); margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
@@ -78,12 +92,14 @@
 </head>
 <body>
 
+<div id="customTooltip"></div>
+
 <div class="modal-overlay" id="exampleModal" onclick="closeExModal(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
         <span class="close-modal" onclick="closeExModal(event)">✕</span>
         <div class="modal-word-title" id="modalTitle">단어</div>
-        <div class="modal-ex-jp" id="modalExJp">일본어 예문이 들어갑니다.</div>
-        <div class="modal-ex-ko" id="modalExKo">한국어 해석이 들어갑니다.</div>
+        <div class="modal-ex-jp" id="modalExJp">일본어 예문</div>
+        <div class="modal-ex-ko" id="modalExKo">한국어 해석</div>
     </div>
 </div>
 
@@ -110,7 +126,7 @@
         <div class="full-card">
             <h2 style="margin-bottom:30px;">기사 등록 및 수정</h2>
             <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:35px;">
-                <input type="text" id="editTitle" class="form-control" style="font-weight:bold; font-size:1.15rem;" placeholder="기사 제목 - 요미가나는 한자[히라가나] 형식">
+                <input type="text" id="editTitle" class="form-control" style="font-weight:bold; font-size:1.15rem;" placeholder="기사 제목 - {한자}[요미가나] 형식">
                 <input type="text" id="editTitleKo" class="form-control" placeholder="제목 뜻 (한국어)">
             </div>
             <p style="margin-bottom:15px; font-weight:bold; color:var(--accent); font-size:1.1rem;">본문 입력 (문장별 대조)</p>
@@ -146,42 +162,84 @@
     let isEditMode = false;
     let editingId = null;
 
-    function goMain() { document.getElementById('editScreen').style.display='none'; document.getElementById('vocabScreen').style.display='none'; document.getElementById('mainScreen').style.display='flex'; renderArticles(); }
+    const tooltip = document.getElementById('customTooltip');
+
+    function goMain() { 
+        document.getElementById('editScreen').style.display='none'; 
+        document.getElementById('vocabScreen').style.display='none'; 
+        document.getElementById('mainScreen').style.display='flex'; 
+        renderArticles(); 
+    }
+    
     function goEdit(id = null) {
-        document.getElementById('mainScreen').style.display='none'; document.getElementById('editScreen').style.display='flex';
-        document.getElementById('sentenceInputs').innerHTML=''; document.getElementById('vocabInputs').innerHTML='';
+        document.getElementById('mainScreen').style.display='none'; 
+        document.getElementById('editScreen').style.display='flex';
+        document.getElementById('sentenceInputs').innerHTML=''; 
+        document.getElementById('vocabInputs').innerHTML='';
         if (id) {
             isEditMode=true; editingId=id;
             const art=articles.find(a=>a.id===id);
-            document.getElementById('editTitle').value=art.title; document.getElementById('editTitleKo').value=art.titleKo||'';
+            document.getElementById('editTitle').value=art.title; 
+            document.getElementById('editTitleKo').value=art.titleKo||'';
             art.jp.split('\n').forEach((v,i)=>addSentenceRow(v, art.ko.split('\n')[i]||''));
             vocabulary.filter(v=>v.articleId===id).forEach(v=>addVocabRow(v.word, v.mean, v.sent));
-        } else { isEditMode=false; editingId=null; document.getElementById('editTitle').value=''; document.getElementById('editTitleKo').value=''; addSentenceRow(); addVocabRow(); }
+        } else { 
+            isEditMode=false; editingId=null; 
+            document.getElementById('editTitle').value=''; 
+            document.getElementById('editTitleKo').value=''; 
+            addSentenceRow(); addVocabRow(); 
+        }
     }
-    function goVocab() { document.getElementById('mainScreen').style.display='none'; document.getElementById('vocabScreen').style.display='flex'; renderFullVocab(); }
-
-    function processJapaneseText(text, vocabList) {
-        if (!text) return "";
     
-        // 1. {대상글자}[요미가나] 형식을 <ruby> 태그로 변환
-        // 이 로직이 적용되면 {五輪}[ごりん] 이 五輪(위에 ごりん 표시)으로 바뀝니다.
+    function goVocab() { 
+        document.getElementById('mainScreen').style.display='none'; 
+        document.getElementById('vocabScreen').style.display='flex'; 
+        renderFullVocab(); 
+    }
+
+    // [개선] 파싱 로직: {한자}[요미가나] 및 괄호 포함 단어 처리
+    function processJapaneseText(text, vocabList) {
+        if(!text) return "";
+        // 1. 요미가나 루비 처리
         let processed = text.replace(/\{([^{}]+)\}\[([^\[\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
         
-        // 2. 단어장 매칭 (호버 시 뜻 표시)
-        if (vocabList && vocabList.length > 0) {
+        // 2. 단어장 매칭 (호버용 커스텀 태그)
+        if (vocabList) {
             vocabList.forEach(v => {
-                // 단어 뜻에 *별표*로 감싼 핵심 뜻이 있는지 확인
-                const match = v.mean.match(/\*([^*]+)\*/);
-                if (match) {
-                    const primaryMean = match[1];
-                    // 이미 변환된 루비 태그(<rt>) 안의 글자는 건드리지 않도록 정규식 설정
-                    const regex = new RegExp(`(${v.word})(?![^<]*>|[^<>]*<\/rt>)`, 'g');
-                    processed = processed.replace(regex, `<span class="highlight-word" title="${primaryMean}">$1</span>`);
+                const matchMean = v.mean.match(/\*([^*]+)\*/);
+                if (matchMean) {
+                    const primaryMean = matchMean[1];
+                    // 단어명에서 괄호() 부분 제거 후 실제 매칭될 텍스트만 추출
+                    const cleanWord = v.word.replace(/\s*\(.*?\)/, "").trim();
+                    if(cleanWord.length === 0) return;
+
+                    // 이미 루비 태그가 된 곳 내부를 건드리지 않도록 정규식 설정
+                    const regex = new RegExp(`(${cleanWord})(?![^<]*>|[^<>]*<\/rt>)`, 'g');
+                    processed = processed.replace(regex, `<span class="highlight-word" data-tooltip="${primaryMean}">$1</span>`);
                 }
             });
         }
         return processed;
     }
+
+    // 커스텀 툴팁 이벤트 리스너 (위임 방식)
+    document.addEventListener('mouseover', (e) => {
+        if (e.target.classList.contains('highlight-word')) {
+            const mean = e.target.getAttribute('data-tooltip');
+            tooltip.innerText = mean;
+            tooltip.style.display = 'block';
+            
+            const rect = e.target.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + rect.width / 2}px`;
+            tooltip.style.top = `${rect.top}px`;
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        if (e.target.classList.contains('highlight-word')) {
+            tooltip.style.display = 'none';
+        }
+    });
 
     function openExModal(word, jp, ko) {
         document.getElementById('modalTitle').innerText = word;
@@ -189,6 +247,7 @@
         document.getElementById('modalExKo').innerText = ko;
         document.getElementById('exampleModal').style.display = 'flex';
     }
+    
     function closeExModal(e) { document.getElementById('exampleModal').style.display = 'none'; }
 
     function addSentenceRow(jp='', ko='') {
@@ -196,6 +255,7 @@
         div.innerHTML=`<textarea class="form-control sent-jp sent-text">${jp}</textarea><textarea class="form-control sent-ko sent-text">${ko}</textarea><button class="btn-del-icon" onclick="this.parentElement.remove()">✕</button>`;
         document.getElementById('sentenceInputs').appendChild(div);
     }
+    
     function addVocabRow(word='', mean='', sent='') {
         const div=document.createElement('div'); div.className='vocab-row-container';
         const [vS, vT]=sent.split(' | ');
@@ -204,7 +264,8 @@
     }
 
     function saveData() {
-        const title=document.getElementById('editTitle').value.trim(); const titleKo=document.getElementById('editTitleKo').value.trim();
+        const title=document.getElementById('editTitle').value.trim(); 
+        const titleKo=document.getElementById('editTitleKo').value.trim();
         const jps=Array.from(document.querySelectorAll('.sent-jp')).map(el=>el.value.trim());
         const kos=Array.from(document.querySelectorAll('.sent-ko')).map(el=>el.value.trim());
         if(!title || jps.join('')==='') return alert('제목과 본문은 필수입니다.');
@@ -217,21 +278,22 @@
             const s=row.querySelector('.voc-s').value.trim(); const t=row.querySelector('.voc-t').value.trim();
             if(w) vocabulary.push({id:Date.now()+Math.random(), word:w, mean:m, sent:t?`${s} | ${t}`:s, articleId:artId});
         });
-        localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary));
+        localStorage.setItem('my_articles',JSON.stringify(articles)); 
+        localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary));
         currentArticleId=artId; goMain(); selectArticle(artId);
     }
 
     function selectArticle(id) {
         currentArticleId=id; const art=articles.find(a=>a.id===id); renderArticles();
         const artVocab=vocabulary.filter(v=>v.articleId===id);
-        let html=`<h2>${processJapaneseText(art.title)}</h2><p class="title-trans">${art.titleKo||''}</p>`;
+        let html=`<h2>${processJapaneseText(art.title, null)}</h2><p class="title-trans">${art.titleKo||''}</p>`;
         art.jp.split('\n').forEach((v,i)=>html+=`<div class="sentence-pair"><div class="viewer-jp">${processJapaneseText(v, artVocab)}</div><div class="viewer-ko">${art.ko.split('\n')[i]||''}</div></div>`);
         document.getElementById('viewer').innerHTML=html;
     }
 
     function renderArticles() {
         const list=document.getElementById('articleList');
-        list.innerHTML=articles.map(a=>`<div class="list-item ${currentArticleId===a.id?'active':''}" onclick="selectArticle(${a.id})"><div class="title">${a.title.replace(/\[[^\]]+\]/g,'')}</div><div class="date">${a.date}</div><div class="list-item-btns"><button class="btn-sm-action" onclick="goEdit(${a.id})">✏️</button><button class="btn-sm-action" onclick="deleteArticle(${a.id},event)">🗑</button></div></div>`).join('');
+        list.innerHTML=articles.map(a=>`<div class="list-item ${currentArticleId===a.id?'active':''}" onclick="selectArticle(${a.id})"><div class="title">${a.title.replace(/\{|\}|\[.*?\]/g,'')}</div><div class="date">${a.date}</div><div class="list-item-btns"><button class="btn-sm-action" onclick="goEdit(${a.id})">✏️</button><button class="btn-sm-action" onclick="deleteArticle(${a.id},event)">🗑</button></div></div>`).join('');
     }
 
     function renderFullVocab() {
@@ -246,7 +308,18 @@
         }).join('');
     }
 
-    function deleteArticle(id,e) { e.stopPropagation(); if(confirm('삭제하시겠습니까?')){ articles=articles.filter(a=>a.id!==id); vocabulary=vocabulary.filter(v=>v.articleId!==id); localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); goMain(); }}
+    function deleteArticle(id,e) { 
+        e.stopPropagation(); 
+        if(confirm('삭제하시겠습니까?')){ 
+            articles=articles.filter(a=>a.id!==id); 
+            vocabulary=vocabulary.filter(v=>v.articleId!==id); 
+            localStorage.setItem('my_articles',JSON.stringify(articles)); 
+            localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); 
+            currentArticleId = null;
+            goMain(); 
+        }
+    }
+    
     window.onload=()=>{ goMain(); if(articles.length>0) selectArticle(articles[0].id); };
 </script>
 </body>
