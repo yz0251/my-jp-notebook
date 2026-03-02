@@ -86,7 +86,6 @@
         .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-        .btn-sm-action { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px; cursor: pointer; font-size: 0.8rem; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -105,13 +104,13 @@
     <div class="topbar">
         <div class="logo" onclick="location.reload()">📒 일본어 학습장</div>
         <div style="display:flex; gap:8px;">
-            <button class="btn btn-ghost" style="padding: 8px 12px;" onclick="exportData()" title="백업 파일 저장">📤 백업</button>
-            <button class="btn btn-ghost" style="padding: 8px 12px;" onclick="document.getElementById('importFileMain').click()" title="백업 파일 불러오기">📥 복원</button>
+            <button class="btn btn-ghost" style="padding: 8px 12px;" onclick="exportData()" title="현재 저장된 모든 데이터를 파일로 저장">📤 백업</button>
+            <button class="btn btn-ghost" style="padding: 8px 12px;" onclick="document.getElementById('importFileMain').click()" title="백업된 파일을 불러오기">📥 복원</button>
             <input type="file" id="importFileMain" style="display:none" onchange="importData(event)">
             
             <span style="width: 1px; height: 24px; background: var(--border); margin: auto 4px;"></span>
             
-            <button class="btn btn-ghost" onclick="goVocab()">📖 단어장</button>
+            <button class="btn btn-ghost" onclick="goVocab()">📖 전체 단어장</button>
             <button class="btn btn-primary" onclick="goEdit()">+ 새 기사 작성</button>
         </div>
     </div>
@@ -128,15 +127,17 @@
     </div>
     <div class="full-container">
         <div class="full-card">
-            <h2 style="margin-bottom:25px; font-size:1.3rem;">기사 등록 및 수정</h2>
+            <h2 style="margin-bottom:25px; font-size:1.3rem;">기사 학습하기</h2>
             <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
-                <input type="text" id="editTitle" class="form-control" style="font-weight:bold;" placeholder="기사 제목 - {한자}[요미가나] 형식">
+                <input type="text" id="editTitle" class="form-control" style="font-weight:bold;" placeholder="기사 제목 (일본어) - 요미가나는 {한자}[요미가나] 형식">
                 <input type="text" id="editTitleKo" class="form-control" placeholder="제목 뜻 (한국어)">
             </div>
-            <p style="margin-bottom:12px; font-weight:bold; color:var(--accent); font-size:0.95rem;">본문 입력 (문장별 대조)</p>
+            <p style="margin-bottom:12px; font-weight:bold; color:var(--accent); font-size:0.95rem;">기사 본문 입력 (문장별 대조)</p>
             <div id="sentenceInputs"></div>
             <button class="btn btn-ghost" style="width:100%; margin-bottom:40px;" onclick="addSentenceRow()">+ 문장 추가</button>
+            
             <hr style="border:none; border-top:1px solid var(--border); margin:35px 0;">
+            
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <p style="font-weight:bold; color:var(--accent); font-size:0.95rem;">단어 기록 (*굵은글씨* 표시)</p>
                 <button class="btn btn-ghost" style="padding:6px 12px; font-size:0.8rem;" onclick="addVocabRow()">+ 단어 추가</button>
@@ -152,7 +153,7 @@
     </div>
     <div class="full-container">
         <div class="full-card">
-            <h2 style="font-size:1.3rem;">단어장 <span id="vocabCount" style="font-size:0.9rem; color:var(--muted); font-weight:normal;"></span></h2>
+            <h2 style="font-size:1.3rem;">전체 단어장 <span id="vocabCount" style="font-size:0.9rem; color:var(--muted); font-weight:normal;"></span></h2>
             <div id="fullVocabList" class="vocab-grid"></div>
         </div>
     </div>
@@ -167,7 +168,6 @@
 
     window.onpopstate = function() { goMainInternal(); };
     function goMainInternal() { document.getElementById('editScreen').style.display='none'; document.getElementById('vocabScreen').style.display='none'; document.getElementById('mainScreen').style.display='flex'; renderArticles(); }
-    function goMain() { if (document.getElementById('mainScreen').style.display === 'none') { history.back(); } }
 
     function goEdit(id = null) {
         history.pushState({page: "edit"}, "Edit", "#edit");
@@ -197,22 +197,36 @@
 
     function addSentenceRow(jp='', ko='') {
         const div=document.createElement('div'); div.className='sentence-row';
-        div.innerHTML=`<textarea class="form-control sent-jp sent-text">${jp}</textarea><textarea class="form-control sent-ko sent-text">${ko}</textarea><button class="btn-del-icon" onclick="this.parentElement.remove()">✕</button>`;
+        div.innerHTML=`
+            <textarea class="form-control sent-jp sent-text" placeholder="일본어 문장을 입력하세요 (요미가나는 {한자}[요미가나] 형식)">${jp}</textarea>
+            <textarea class="form-control sent-ko sent-text" placeholder="한국어 번역을 입력하세요">${ko}</textarea>
+            <button class="btn-del-icon" title="문장 삭제" onclick="this.parentElement.remove()">✕</button>
+        `;
         document.getElementById('sentenceInputs').appendChild(div);
     }
+
     function addVocabRow(word='', mean='', sent='') {
         const div=document.createElement('div'); div.className='vocab-row-container';
         const [vS, vT]=sent.split(' | ');
-        div.innerHTML=`<div class="vocab-inputs-grid"><div class="vocab-input-line"><input type="text" class="form-control voc-w" style="font-weight:bold; color:var(--accent);" value="${word}"><input type="text" class="form-control voc-s" value="${vS||''}"></div><div class="vocab-input-line"><input type="text" class="form-control voc-m" value="${mean}"><input type="text" class="form-control voc-t" value="${vT||''}"></div></div><button class="btn-del-icon" onclick="this.parentElement.parentElement.remove()">✕</button>`;
+        div.innerHTML=`
+            <div class="vocab-inputs-grid">
+                <div class="vocab-input-line">
+                    <input type="text" class="form-control voc-w" style="font-weight:bold; color:var(--accent);" placeholder="단어" value="${word}">
+                    <input type="text" class="form-control voc-s" placeholder="일본어 예문" value="${vS||''}">
+                </div>
+                <div class="vocab-input-line">
+                    <input type="text" class="form-control voc-m" placeholder="뜻 (중요한 뜻은 *별표*로 감싸기)" value="${mean}">
+                    <input type="text" class="form-control voc-t" placeholder="예문 해석" value="${vT||''}">
+                </div>
+            </div>
+            <button class="btn-del-icon" title="단어 삭제" onclick="this.parentElement.remove()">✕</button>
+        `;
         document.getElementById('vocabInputs').appendChild(div);
     }
 
-    // 백업 데이터 내보내기 (기사+단어 포함)
+    // 백업 데이터 내보내기
     function exportData() {
-        const backupData = {
-            articles: articles,
-            vocabulary: vocabulary
-        };
+        const backupData = { articles: articles, vocabulary: vocabulary };
         const blob = new Blob([JSON.stringify(backupData)], {type: "application/json"});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -229,7 +243,7 @@
         reader.onload = function(e) {
             try {
                 const imported = JSON.parse(e.target.result);
-                if (confirm('기존 데이터에 합치시겠습니까? (취소 시 기존 데이터는 지워지고 덮어씌워집니다.)')) {
+                if (confirm('기존 데이터 뒤에 합치시겠습니까? (취소 시 기존 데이터는 지워지고 덮어씌워집니다.)')) {
                     articles = [...articles, ...imported.articles];
                     vocabulary = [...vocabulary, ...imported.vocabulary];
                 } else {
@@ -239,8 +253,7 @@
                 localStorage.setItem('my_articles', JSON.stringify(articles));
                 localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
                 renderArticles();
-                alert('복원이 완료되었습니다!');
-                // 현재 기사가 있으면 다시 로드
+                alert('데이터 복원이 완료되었습니다!');
                 if(currentArticleId) selectArticle(currentArticleId);
             } catch (err) {
                 alert('올바른 백업 파일이 아닙니다.');
@@ -305,7 +318,7 @@
         }).join('');
     }
 
-    function deleteArticle(id,e) { e.stopPropagation(); if(confirm('삭제하시겠습니까?')){ articles=articles.filter(a=>a.id!==id); vocabulary=vocabulary.filter(v=>v.articleId!==id); localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); currentArticleId=null; goMainInternal(); }}
+    function deleteArticle(id,e) { e.stopPropagation(); if(confirm('기사와 관련 단어를 모두 삭제하시겠습니까?')){ articles=articles.filter(a=>a.id!==id); vocabulary=vocabulary.filter(v=>v.articleId!==id); localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); currentArticleId=null; goMainInternal(); }}
     window.onload=()=>{ history.replaceState({page: "main"}, "Main", ""); goMainInternal(); if(articles.length>0) selectArticle(articles[0].id); };
 </script>
 </body>
