@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 학습장</title>
+    <title>일본어 독학 노트</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍥</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -22,13 +22,26 @@
         .panel { background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
         .panel-head { padding: 15px; border-bottom: 1px solid var(--border); font-weight: 700; background: #fafaff; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
 
+        /* 목록 아이템 스타일 수정 */
         .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; position: relative; }
         .list-item:hover { background: #f8f9ff; }
         .list-item.active { background: #f0f1ff; border-left: 4px solid var(--accent); }
-        .list-item .title { font-weight: 700; font-size: 0.9rem; padding-right: 70px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .list-item .date { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-        .list-item-btns { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: none; gap: 8px; background: inherit; padding-left: 10px; }
+        
+        /* 제목이 최대한 넓게 보이도록 설정 */
+        .list-item .title { font-weight: 700; font-size: 0.9rem; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; margin-bottom: 6px; }
+        
+        /* 날짜와 버튼이 공존하는 하단 라인 */
+        .item-footer { display: flex; justify-content: space-between; align-items: center; height: 18px; }
+        .list-item .date { font-size: 0.75rem; color: var(--muted); }
+        
+        /* 버튼을 날짜와 같은 크기로 우측 배치 */
+        .list-item-btns { display: none; gap: 10px; }
         .list-item:hover .list-item-btns { display: flex; }
+        .list-item:hover .date { display: none; } /* 호버 시 날짜 대신 버튼 노출 */
+
+        .btn-text-action { background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 3px; }
+        .btn-text-action:hover { color: var(--accent); }
+        .btn-text-action.del:hover { color: var(--danger); }
 
         .viewer { padding: 40px 50px; overflow-y: auto; flex: 1; }
         .viewer h2 { font-size: 1.5rem; color: var(--text); line-height: 1.4; margin-bottom: 10px; }
@@ -80,7 +93,6 @@
         .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-        .btn-sm-action { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px; cursor: pointer; font-size: 0.8rem; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -97,7 +109,7 @@
 
 <div id="mainScreen" style="display: flex;">
     <div class="topbar">
-        <div class="logo" onclick="location.reload()">🍥 일본어 학습장</div>
+        <div class="logo" onclick="location.reload()">📒 일본어 학습장</div>
         <div style="display:flex; gap:10px;">
             <button class="btn btn-ghost" onclick="goVocab()">📖 전체 단어장</button>
             <button class="btn btn-primary" onclick="goEdit()">+ 새 기사 작성</button>
@@ -154,31 +166,14 @@
     let isEditMode = false;
     let editingId = null;
 
-    // [신규] 브라우저 뒤로가기 대응 로직
-    window.onpopstate = function() {
-        goMainInternal();
-    };
-
-    function goMainInternal() {
-        document.getElementById('editScreen').style.display='none'; 
-        document.getElementById('vocabScreen').style.display='none'; 
-        document.getElementById('mainScreen').style.display='flex'; 
-        renderArticles();
-    }
-
-    function goMain() {
-        // 명시적으로 뒤로 가거나 취소할 때 사용
-        if (document.getElementById('mainScreen').style.display === 'none') {
-            history.back();
-        }
-    }
+    window.onpopstate = function() { goMainInternal(); };
+    function goMainInternal() { document.getElementById('editScreen').style.display='none'; document.getElementById('vocabScreen').style.display='none'; document.getElementById('mainScreen').style.display='flex'; renderArticles(); }
+    function goMain() { if (document.getElementById('mainScreen').style.display === 'none') { history.back(); } }
 
     function goEdit(id = null) {
         history.pushState({page: "edit"}, "Edit", "#edit");
-        document.getElementById('mainScreen').style.display='none'; 
-        document.getElementById('editScreen').style.display='flex';
-        document.getElementById('sentenceInputs').innerHTML=''; 
-        document.getElementById('vocabInputs').innerHTML='';
+        document.getElementById('mainScreen').style.display='none'; document.getElementById('editScreen').style.display='flex';
+        document.getElementById('sentenceInputs').innerHTML=''; document.getElementById('vocabInputs').innerHTML='';
         if (id) {
             isEditMode=true; editingId=id;
             const art=articles.find(a=>a.id===id);
@@ -188,22 +183,10 @@
         } else { isEditMode=false; editingId=null; document.getElementById('editTitle').value=''; document.getElementById('editTitleKo').value=''; addSentenceRow(); addVocabRow(); }
     }
 
-    function goVocab() { 
-        history.pushState({page: "vocab"}, "Vocab", "#vocab");
-        document.getElementById('mainScreen').style.display='none'; 
-        document.getElementById('vocabScreen').style.display='flex'; 
-        renderFullVocab(); 
-    }
+    function goVocab() { history.pushState({page: "vocab"}, "Vocab", "#vocab"); document.getElementById('mainScreen').style.display='none'; document.getElementById('vocabScreen').style.display='flex'; renderFullVocab(); }
 
-    function processJapaneseText(text) {
-        if(!text) return "";
-        return text.replace(/\{([^{}]+)\}\[([^\[\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>');
-    }
-
-    function processMeaningText(text) {
-        if(!text) return "";
-        return text.replace(/\*([^*]+)\*/g, '<b>$1</b>');
-    }
+    function processJapaneseText(text) { return text ? text.replace(/\{([^{}]+)\}\[([^\[\]]+)\]/g, '<ruby>$1<rt>$2</rt></ruby>') : ""; }
+    function processMeaningText(text) { return text ? text.replace(/\*([^*]+)\*/g, '<b>$1</b>') : ""; }
 
     function openExModal(word, jp, ko) {
         document.getElementById('modalTitle').innerText = word;
@@ -211,7 +194,7 @@
         document.getElementById('modalExKo').innerText = ko;
         document.getElementById('exampleModal').style.display = 'flex';
     }
-    function closeExModal(e) { document.getElementById('exampleModal').style.display = 'none'; }
+    function closeExModal() { document.getElementById('exampleModal').style.display = 'none'; }
 
     function addSentenceRow(jp='', ko='') {
         const div=document.createElement('div'); div.className='sentence-row';
@@ -240,11 +223,7 @@
             if(w) vocabulary.push({id:Date.now()+Math.random(), word:w, mean:m, sent:t?`${s} | ${t}`:s, articleId:artId});
         });
         localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary));
-        currentArticleId=artId; 
-        
-        // 저장 후 메인으로 돌아갈 때는 히스토리 꼬이지 않게 pushState 기록 없이 메인 표시
-        goMainInternal(); 
-        selectArticle(artId);
+        currentArticleId=artId; goMainInternal(); selectArticle(artId);
     }
 
     function selectArticle(id) {
@@ -253,24 +232,24 @@
         art.jp.split('\n').forEach((v,i)=>html+=`<div class="sentence-pair"><div class="viewer-jp">${processJapaneseText(v)}</div><div class="viewer-ko">${art.ko.split('\n')[i]||''}</div></div>`);
         const artVocab = vocabulary.filter(v => v.articleId === id).sort((a,b) => a.word.localeCompare(b.word, 'ja'));
         if(artVocab.length > 0) {
-            html += `<div class="article-vocab-note">
-                        <h3>📝 이 기사의 단어 노트</h3>
-                        <div class="mini-vocab-grid">
-                            ${artVocab.map(v => `
-                                <div class="mini-vocab-card">
-                                    <div class="mini-vocab-word">${v.word}</div>
-                                    <div class="mini-vocab-mean">${processMeaningText(v.mean)}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                     </div>`;
+            html += `<div class="article-vocab-note"><h3>📝 이 기사의 단어 노트</h3><div class="mini-vocab-grid">${artVocab.map(v => `<div class="mini-vocab-card"><div class="mini-vocab-word">${v.word}</div><div class="mini-vocab-mean">${processMeaningText(v.mean)}</div></div>`).join('')}</div></div>`;
         }
         document.getElementById('viewer').innerHTML=html;
     }
 
     function renderArticles() {
         const list=document.getElementById('articleList');
-        list.innerHTML=articles.map(a=>`<div class="list-item ${currentArticleId===a.id?'active':''}" onclick="selectArticle(${a.id})"><div class="title">${a.title.replace(/\{|\}|\[.*?\]/g,'')}</div><div class="date">${a.date}</div><div class="list-item-btns"><button class="btn-sm-action" onclick="goEdit(${a.id})">✏️</button><button class="btn-sm-action" onclick="deleteArticle(${a.id},event)">🗑</button></div></div>`).join('');
+        list.innerHTML=articles.map(a=>`
+            <div class="list-item ${currentArticleId===a.id?'active':''}" onclick="selectArticle(${a.id})">
+                <div class="title">${a.title.replace(/\{|\}|\[.*?\]/g,'')}</div>
+                <div class="item-footer">
+                    <div class="date">${a.date}</div>
+                    <div class="list-item-btns">
+                        <button class="btn-text-action" onclick="goEdit(${a.id}, event)">✏️ 수정</button>
+                        <button class="btn-text-action del" onclick="deleteArticle(${a.id},event)">🗑 삭제</button>
+                    </div>
+                </div>
+            </div>`).join('');
     }
 
     function renderFullVocab() {
@@ -279,20 +258,13 @@
         document.getElementById('vocabCount').innerText=`(총 ${sorted.length}개)`;
         list.innerHTML=sorted.map(v=>{
             const parts=v.sent.split(' | ');
-            const hasEx = parts[0].trim().length > 0;
-            const exBtn = hasEx ? `<button class="btn-ex-pop" onclick="openExModal('${v.word}','${parts[0]}','${parts[1]||''}')">예문</button>` : '';
+            const exBtn = parts[0].trim().length > 0 ? `<button class="btn-ex-pop" onclick="openExModal('${v.word}','${parts[0]}','${parts[1]||''}')">예문</button>` : '';
             return `<div class="vocab-card">${exBtn}<div class="vocab-word">${v.word}</div><div class="vocab-mean">${processMeaningText(v.mean)}</div></div>`
         }).join('');
     }
 
     function deleteArticle(id,e) { e.stopPropagation(); if(confirm('삭제하시겠습니까?')){ articles=articles.filter(a=>a.id!==id); vocabulary=vocabulary.filter(v=>v.articleId!==id); localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); currentArticleId=null; goMainInternal(); }}
-    
-    // 초기 로딩 시 히스토리 상태 초기화
-    window.onload=()=>{ 
-        history.replaceState({page: "main"}, "Main", "");
-        goMainInternal(); 
-        if(articles.length>0) selectArticle(articles[0].id); 
-    };
+    window.onload=()=>{ history.replaceState({page: "main"}, "Main", ""); goMainInternal(); if(articles.length>0) selectArticle(articles[0].id); };
 </script>
 </body>
 </html>
