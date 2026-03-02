@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>일본어 독학 노트</title>
+    <title>일본어 학습장</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍥</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -22,22 +22,15 @@
         .panel { background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
         .panel-head { padding: 15px; border-bottom: 1px solid var(--border); font-weight: 700; background: #fafaff; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
 
-        /* 목록 아이템 스타일 수정 */
         .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; position: relative; }
         .list-item:hover { background: #f8f9ff; }
         .list-item.active { background: #f0f1ff; border-left: 4px solid var(--accent); }
-        
-        /* 제목이 최대한 넓게 보이도록 설정 */
         .list-item .title { font-weight: 700; font-size: 0.9rem; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; margin-bottom: 6px; }
-        
-        /* 날짜와 버튼이 공존하는 하단 라인 */
         .item-footer { display: flex; justify-content: space-between; align-items: center; height: 18px; }
         .list-item .date { font-size: 0.75rem; color: var(--muted); }
-        
-        /* 버튼을 날짜와 같은 크기로 우측 배치 */
         .list-item-btns { display: none; gap: 10px; }
         .list-item:hover .list-item-btns { display: flex; }
-        .list-item:hover .date { display: none; } /* 호버 시 날짜 대신 버튼 노출 */
+        .list-item:hover .date { display: none; }
 
         .btn-text-action { background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 3px; }
         .btn-text-action:hover { color: var(--accent); }
@@ -93,6 +86,7 @@
         .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-sm-action { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px; cursor: pointer; font-size: 0.8rem; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -110,14 +104,20 @@
 <div id="mainScreen" style="display: flex;">
     <div class="topbar">
         <div class="logo" onclick="location.reload()">📒 일본어 학습장</div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-ghost" onclick="goVocab()">📖 전체 단어장</button>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-ghost" style="padding: 8px 12px;" onclick="exportData()" title="백업 파일 저장">📤 백업</button>
+            <button class="btn btn-ghost" style="padding: 8px 12px;" onclick="document.getElementById('importFileMain').click()" title="백업 파일 불러오기">📥 복원</button>
+            <input type="file" id="importFileMain" style="display:none" onchange="importData(event)">
+            
+            <span style="width: 1px; height: 24px; background: var(--border); margin: auto 4px;"></span>
+            
+            <button class="btn btn-ghost" onclick="goVocab()">📖 단어장</button>
             <button class="btn btn-primary" onclick="goEdit()">+ 새 기사 작성</button>
         </div>
     </div>
     <div class="main-grid">
-        <div class="panel"><div class="panel-head">학습 목록</div><div id="articleList" style="overflow-y:auto; flex:1;"></div></div>
-        <div class="panel"><div class="panel-head">학습 본문</div><div id="viewer" class="viewer"></div></div>
+        <div class="panel"><div class="panel-head">기사 목록</div><div id="articleList" style="overflow-y:auto; flex:1;"></div></div>
+        <div class="panel"><div class="panel-head">기사 본문</div><div id="viewer" class="viewer"></div></div>
     </div>
 </div>
 
@@ -149,11 +149,10 @@
 <div id="vocabScreen">
     <div class="topbar">
         <div class="logo" onclick="history.back()">🔙 메인으로</div>
-        <div style="font-weight:bold; color:var(--accent); font-size:0.9rem;">일본어 가나다순 정렬</div>
     </div>
     <div class="full-container">
         <div class="full-card">
-            <h2 style="font-size:1.3rem;">전체 단어장 <span id="vocabCount" style="font-size:0.9rem; color:var(--muted); font-weight:normal;"></span></h2>
+            <h2 style="font-size:1.3rem;">단어장 <span id="vocabCount" style="font-size:0.9rem; color:var(--muted); font-weight:normal;"></span></h2>
             <div id="fullVocabList" class="vocab-grid"></div>
         </div>
     </div>
@@ -208,6 +207,48 @@
         document.getElementById('vocabInputs').appendChild(div);
     }
 
+    // 백업 데이터 내보내기 (기사+단어 포함)
+    function exportData() {
+        const backupData = {
+            articles: articles,
+            vocabulary: vocabulary
+        };
+        const blob = new Blob([JSON.stringify(backupData)], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `일본어학습장_백업_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    }
+
+    // 백업 데이터 불러오기
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (confirm('기존 데이터에 합치시겠습니까? (취소 시 기존 데이터는 지워지고 덮어씌워집니다.)')) {
+                    articles = [...articles, ...imported.articles];
+                    vocabulary = [...vocabulary, ...imported.vocabulary];
+                } else {
+                    articles = imported.articles;
+                    vocabulary = imported.vocabulary;
+                }
+                localStorage.setItem('my_articles', JSON.stringify(articles));
+                localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
+                renderArticles();
+                alert('복원이 완료되었습니다!');
+                // 현재 기사가 있으면 다시 로드
+                if(currentArticleId) selectArticle(currentArticleId);
+            } catch (err) {
+                alert('올바른 백업 파일이 아닙니다.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
     function saveData() {
         const title=document.getElementById('editTitle').value.trim(); const titleKo=document.getElementById('editTitleKo').value.trim();
         const jps=Array.from(document.querySelectorAll('.sent-jp')).map(el=>el.value.trim());
@@ -228,11 +269,12 @@
 
     function selectArticle(id) {
         currentArticleId=id; const art=articles.find(a=>a.id===id); renderArticles();
+        if(!art) return;
         let html=`<h2>${processJapaneseText(art.title)}</h2><p class="title-trans">${art.titleKo||''}</p>`;
         art.jp.split('\n').forEach((v,i)=>html+=`<div class="sentence-pair"><div class="viewer-jp">${processJapaneseText(v)}</div><div class="viewer-ko">${art.ko.split('\n')[i]||''}</div></div>`);
         const artVocab = vocabulary.filter(v => v.articleId === id).sort((a,b) => a.word.localeCompare(b.word, 'ja'));
         if(artVocab.length > 0) {
-            html += `<div class="article-vocab-note"><h3>📝 이 기사의 단어 노트</h3><div class="mini-vocab-grid">${artVocab.map(v => `<div class="mini-vocab-card"><div class="mini-vocab-word">${v.word}</div><div class="mini-vocab-mean">${processMeaningText(v.mean)}</div></div>`).join('')}</div></div>`;
+            html += `<div class="article-vocab-note"><h3>📝 이 기사의 단어</h3><div class="mini-vocab-grid">${artVocab.map(v => `<div class="mini-vocab-card"><div class="mini-vocab-word">${v.word}</div><div class="mini-vocab-mean">${processMeaningText(v.mean)}</div></div>`).join('')}</div></div>`;
         }
         document.getElementById('viewer').innerHTML=html;
     }
