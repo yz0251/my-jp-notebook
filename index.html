@@ -95,8 +95,8 @@
     <div class="modal-box" onclick="event.stopPropagation()">
         <span class="close-modal" onclick="closeExModal(event)">✕</span>
         <div class="modal-word-title" id="modalTitle">단어</div>
-        <div class="modal-ex-jp" id="modalExJp">일본어 예문</div>
-        <div class="modal-ex-ko" id="modalExKo">한국어 해석</div>
+        <div class="modal-ex-jp" id="modalExJp">예문</div>
+        <div class="modal-ex-ko" id="modalExKo">예문 번역</div>
     </div>
 </div>
 
@@ -129,17 +129,17 @@
         <div class="full-card">
             <h2 style="margin-bottom:25px; font-size:1.3rem;">기사 학습하기</h2>
             <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
-                <input type="text" id="editTitle" class="form-control" style="font-weight:bold;" placeholder="기사 제목 (일본어) - 요미가나는 {한자}[요미가나] 형식">
-                <input type="text" id="editTitleKo" class="form-control" placeholder="제목 뜻 (한국어)">
+                <input type="text" id="editTitle" class="form-control" style="font-weight:bold;" placeholder="기사 제목">
+                <input type="text" id="editTitleKo" class="form-control" placeholder="번역">
             </div>
-            <p style="margin-bottom:12px; font-weight:bold; color:var(--accent); font-size:0.95rem;">기사 본문 입력 (문장별 대조)</p>
+            <p style="margin-bottom:12px; font-weight:bold; color:var(--accent); font-size:0.95rem;">기사 본문</p>
             <div id="sentenceInputs"></div>
             <button class="btn btn-ghost" style="width:100%; margin-bottom:40px;" onclick="addSentenceRow()">+ 문장 추가</button>
             
             <hr style="border:none; border-top:1px solid var(--border); margin:35px 0;">
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <p style="font-weight:bold; color:var(--accent); font-size:0.95rem;">단어 기록 (*굵은글씨* 표시)</p>
+                <p style="font-weight:bold; color:var(--accent); font-size:0.95rem;">단어</p>
                 <button class="btn btn-ghost" style="padding:6px 12px; font-size:0.8rem;" onclick="addVocabRow()">+ 단어 추가</button>
             </div>
             <div id="vocabInputs"></div>
@@ -198,8 +198,8 @@
     function addSentenceRow(jp='', ko='') {
         const div=document.createElement('div'); div.className='sentence-row';
         div.innerHTML=`
-            <textarea class="form-control sent-jp sent-text" placeholder="일본어 문장을 입력하세요 (요미가나는 {한자}[요미가나] 형식)">${jp}</textarea>
-            <textarea class="form-control sent-ko sent-text" placeholder="한국어 번역을 입력하세요">${ko}</textarea>
+            <textarea class="form-control sent-jp sent-text" placeholder="본문 문장 ({한자}[요미가나])">${jp}</textarea>
+            <textarea class="form-control sent-ko sent-text" placeholder="번역">${ko}</textarea>
             <button class="btn-del-icon" title="문장 삭제" onclick="this.parentElement.remove()">✕</button>
         `;
         document.getElementById('sentenceInputs').appendChild(div);
@@ -215,7 +215,7 @@
                     <input type="text" class="form-control voc-s" placeholder="일본어 예문" value="${vS||''}">
                 </div>
                 <div class="vocab-input-line">
-                    <input type="text" class="form-control voc-m" placeholder="뜻 (중요한 뜻은 *별표*로 감싸기)" value="${mean}">
+                    <input type="text" class="form-control voc-m" placeholder="뜻 (*기사에서 쓰인 뜻*)" value="${mean}">
                     <input type="text" class="form-control voc-t" placeholder="예문 해석" value="${vT||''}">
                 </div>
             </div>
