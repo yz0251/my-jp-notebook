@@ -8,58 +8,48 @@
     <style>
         :root {
             --bg:#f5f6fa; --surface:#ffffff; --border:#e2e4ec;
-            --text:#1e1f2e; --muted:#9395a5; --accent:#6c63ff; --expense:#f43f5e;
+            --text:#1e1f2e; --muted:#9395a5; --accent:#6c63ff; --danger:#f43f5e;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Nunito','Noto Sans KR','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
         
-        /* 화면 전환용 섹션 */
         #mainScreen, #editScreen, #vocabScreen { display: none; flex-direction: column; height: 100vh; }
         .topbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
         .logo { font-weight: 800; font-size: 1.2rem; color: var(--accent); cursor: pointer; }
 
-        /* 메인 그리드 (2컬럼으로 변경) */
         .main-grid { display: grid; grid-template-columns: 320px 1fr; flex: 1; overflow: hidden; background: var(--border); gap: 1px; }
         .panel { background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
         .panel-head { padding: 15px; border-bottom: 1px solid var(--border); font-weight: 700; background: #fafaff; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 리스트 아이템 */
         .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; position: relative; }
         .list-item:hover { background: #f8f9ff; }
         .list-item.active { background: #f0f1ff; border-left: 4px solid var(--accent); }
-        .list-item .title { font-weight: 700; font-size: 0.9rem; padding-right: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .list-item .date { font-size: 0.75rem; color: var(--muted); }
         .list-item-btns { position: absolute; top: 15px; right: 10px; display: none; gap: 5px; }
         .list-item:hover .list-item-btns { display: flex; }
 
-        /* 뷰어 */
         .viewer { padding: 40px; overflow-y: auto; flex: 1; }
-        .viewer h2 { margin-bottom: 25px; font-size: 1.6rem; color: var(--text); }
         .jp-text { font-size: 1.3rem; line-height: 2.3; margin-bottom: 40px; white-space: pre-wrap; color: #2c3e50; }
         .ko-text { color: #7f8c8d; border-top: 1px dashed var(--border); padding-top: 25px; line-height: 1.8; white-space: pre-wrap; }
 
-        /* 단어장 화면 전용 스타일 */
         .full-container { flex: 1; overflow-y: auto; padding: 40px 20px; background: var(--bg); display: flex; flex-direction: column; align-items: center; }
         .full-card { background: var(--surface); width: 100%; max-width: 1000px; padding: 30px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
-        .vocab-card { padding: 20px; background: #fff; border: 1px solid var(--border); border-radius: 12px; position: relative; transition: transform 0.2s; }
-        .vocab-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+        /* 문장 단위 입력 스타일 */
+        .sentence-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 15px; margin-bottom: 15px; background: #fcfcff; padding: 10px; border-radius: 12px; border: 1px solid #eee; }
+        
+        /* 단어 카드 스타일 */
+        .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
+        .vocab-card { padding: 20px; background: #fff; border: 1px solid var(--border); border-radius: 12px; }
         .vocab-word { font-weight: 800; color: var(--accent); font-size: 1.2rem; margin-bottom: 8px; }
-        .vocab-sent { font-size: 0.9rem; color: #555; line-height: 1.5; font-style: italic; }
+        .vocab-sent { font-size: 0.9rem; color: #555; line-height: 1.5; }
 
-        /* 폼 스타일 */
-        .form-section { margin-bottom: 30px; }
-        .form-label { display: block; font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; }
-        .form-control { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; }
-        .vocab-row { display: grid; grid-template-columns: 200px 1fr 40px; gap: 10px; margin-bottom: 10px; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; }
+        .vocab-row { display: grid; grid-template-columns: 180px 1fr 40px; gap: 10px; margin-bottom: 10px; }
 
-        /* 버튼 */
-        .btn { padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-family: inherit; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-family: inherit; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-        .btn-ghost:hover { background: #f8f9ff; color: var(--text); }
-        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+        .btn-danger-sm { color: var(--danger); background: none; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -68,56 +58,37 @@
     <div class="topbar">
         <div class="logo" onclick="location.reload()">📒 일본어 학습장</div>
         <div style="display:flex; gap:10px;">
-            <button class="btn btn-ghost" onclick="goVocab()">📖 단어장 가기</button>
+            <button class="btn btn-ghost" onclick="goVocab()">📖 단어장</button>
             <button class="btn btn-primary" onclick="goEdit()">+ 새 기사 작성</button>
         </div>
     </div>
     <div class="main-grid">
-        <div class="panel">
-            <div class="panel-head">학습 목록</div>
-            <div id="articleList" style="overflow-y:auto; flex:1;"></div>
-        </div>
-        <div class="panel">
-            <div class="panel-head">학습 본문</div>
-            <div id="viewer" class="viewer">
-                <div style="text-align:center; color:var(--muted); margin-top:100px;">기사를 선택하거나 새로 작성해 주세요.</div>
-            </div>
-        </div>
+        <div class="panel"><div class="panel-head">학습 목록</div><div id="articleList" style="overflow-y:auto; flex:1;"></div></div>
+        <div class="panel"><div class="panel-head">학습 본문</div><div id="viewer" class="viewer"></div></div>
     </div>
 </div>
 
 <div id="editScreen">
     <div class="topbar">
         <div class="logo" onclick="goMain()">🔙 뒤로가기</div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-ghost" onclick="goMain()">취소</button>
-            <button class="btn btn-primary" id="submitBtn" onclick="saveData()">등록 완료</button>
-        </div>
+        <button class="btn btn-primary" onclick="saveData()">저장 완료</button>
     </div>
     <div class="full-container">
         <div class="full-card">
-            <h2 id="editHeader" style="margin-bottom:30px;">새 학습 데이터 등록</h2>
-            <div class="form-section">
-                <label class="form-label">기사 제목</label>
-                <input type="text" id="editTitle" class="form-control" placeholder="제목을 입력하세요">
+            <h2 id="editHeader" style="margin-bottom:25px;">기사 등록</h2>
+            <input type="text" id="editTitle" class="form-control" style="margin-bottom:20px; font-weight:bold;" placeholder="기사 제목을 입력하세요">
+            
+            <p class="form-label" style="margin-bottom:10px; font-weight:bold;">본문 입력 (문장별 대조)</p>
+            <div id="sentenceInputs"></div>
+            <button class="btn btn-ghost" style="width:100%; margin-bottom:30px;" onclick="addSentenceRow()">+ 문장 추가</button>
+
+            <hr style="border:none; border-top:1px solid var(--border); margin:30px 0;">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <p style="font-weight:bold;">단어 기록</p>
+                <button class="btn btn-ghost" style="padding:5px 12px; font-size:0.8rem;" onclick="addVocabRow()">+ 단어 추가</button>
             </div>
-            <div class="form-section" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                <div>
-                    <label class="form-label">일본어 본문</label>
-                    <textarea id="editJp" class="form-control" style="height:300px;" placeholder="일본어 원문"></textarea>
-                </div>
-                <div>
-                    <label class="form-label">한국어 해석</label>
-                    <textarea id="editKo" class="form-control" style="height:300px;" placeholder="해석을 입력하세요"></textarea>
-                </div>
-            </div>
-            <div class="form-section">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <label class="form-label" style="margin-bottom:0;">단어 함께 기록</label>
-                    <button class="btn btn-ghost btn-sm" onclick="addVocabRow()">+ 단어 칸 추가</button>
-                </div>
-                <div id="vocabInputs"></div>
-            </div>
+            <div id="vocabInputs"></div>
         </div>
     </div>
 </div>
@@ -125,16 +96,11 @@
 <div id="vocabScreen">
     <div class="topbar">
         <div class="logo" onclick="goMain()">🔙 메인으로</div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-ghost" onclick="sortVocab('date')">최신순</button>
-            <button class="btn btn-ghost" onclick="sortVocab('alpha')">아카사타나순</button>
-        </div>
+        <div style="font-weight:bold; color:var(--accent);">가나다(あいうえ오)순 정렬됨</div>
     </div>
     <div class="full-container">
         <div class="full-card">
-            <h2 style="display:flex; justify-content:space-between; align-items:center;">
-                전체 단어장 <span id="vocabCount" style="font-size:1rem; color:var(--muted);">총 0개</span>
-            </h2>
+            <h2>전체 단어장 <span id="vocabCount" style="font-size:1rem; color:var(--muted); font-weight:normal;"></span></h2>
             <div id="fullVocabList" class="vocab-grid"></div>
         </div>
     </div>
@@ -147,59 +113,77 @@
     let isEditMode = false;
     let editingId = null;
 
-    // 화면 전환 함수들
-    function hideAll() {
-        document.getElementById('mainScreen').style.display = 'none';
+    function goMain() { 
         document.getElementById('editScreen').style.display = 'none';
         document.getElementById('vocabScreen').style.display = 'none';
+        document.getElementById('mainScreen').style.display = 'flex'; 
+        renderArticles(); 
     }
 
-    function goMain() { hideAll(); document.getElementById('mainScreen').style.display = 'flex'; renderArticles(); }
-    
     function goEdit(id = null) {
-        hideAll();
+        document.getElementById('mainScreen').style.display = 'none';
         document.getElementById('editScreen').style.display = 'flex';
+        document.getElementById('sentenceInputs').innerHTML = '';
         document.getElementById('vocabInputs').innerHTML = '';
+        
         if (id) {
             isEditMode = true; editingId = id;
             const art = articles.find(a => a.id === id);
-            document.getElementById('editHeader').innerText = '기사 수정하기';
             document.getElementById('editTitle').value = art.title;
-            document.getElementById('editJp').value = art.jp;
-            document.getElementById('editKo').value = art.ko;
-            const relatedVocab = vocabulary.filter(v => v.articleId === id);
-            relatedVocab.forEach(v => addVocabRow(v.word, v.sent));
+            // 문장 데이터 복구 (기존 방식 호환을 위해 \n으로 나눔)
+            const jps = art.jp.split('\n');
+            const kos = art.ko.split('\n');
+            const max = Math.max(jps.length, kos.length);
+            for(let i=0; i<max; i++) addSentenceRow(jps[i] || '', kos[i] || '');
+            vocabulary.filter(v => v.articleId === id).forEach(v => addVocabRow(v.word, v.sent));
         } else {
             isEditMode = false; editingId = null;
-            document.getElementById('editHeader').innerText = '새 학습 데이터 등록';
             document.getElementById('editTitle').value = '';
-            document.getElementById('editJp').value = '';
-            document.getElementById('editKo').value = '';
-            addVocabRow();
+            addSentenceRow(); addVocabRow();
         }
     }
 
-    function goVocab() { hideAll(); document.getElementById('vocabScreen').style.display = 'flex'; renderFullVocab(); }
+    function goVocab() { 
+        document.getElementById('mainScreen').style.display = 'none';
+        document.getElementById('vocabScreen').style.display = 'flex'; 
+        renderFullVocab(); 
+    }
 
-    // 단어 추가 로직
+    function addSentenceRow(jp = '', ko = '') {
+        const div = document.createElement('div');
+        div.className = 'sentence-row';
+        div.innerHTML = `
+            <textarea class="form-control sent-jp" placeholder="일본어 문장" style="height:60px; border:none; background:transparent;">${jp}</textarea>
+            <textarea class="form-control sent-ko" placeholder="한국어 번역" style="height:60px; border:none; background:transparent;">${ko}</textarea>
+            <button class="btn-danger-sm" onclick="this.parentElement.remove()">✕</button>
+        `;
+        document.getElementById('sentenceInputs').appendChild(div);
+    }
+
     function addVocabRow(word = '', sent = '') {
         const div = document.createElement('div');
         div.className = 'vocab-row';
         div.innerHTML = `<input type="text" class="form-control voc-w" placeholder="단어" value="${word}">
-                         <input type="text" class="form-control voc-s" placeholder="문장" value="${sent}">
-                         <button class="btn btn-danger-sm" onclick="this.parentElement.remove()">✕</button>`;
+                         <input type="text" class="form-control voc-s" placeholder="예문/뜻" value="${sent}">
+                         <button class="btn-danger-sm" onclick="this.parentElement.remove()">✕</button>`;
         document.getElementById('vocabInputs').appendChild(div);
     }
 
-    // 데이터 저장
     function saveData() {
         const title = document.getElementById('editTitle').value.trim();
-        const jp = document.getElementById('editJp').value.trim();
-        const ko = document.getElementById('editKo').value.trim();
-        if(!title || !jp) return alert('제목과 본문은 필수입니다.');
+        const jps = Array.from(document.querySelectorAll('.sent-jp')).map(el => el.value.trim());
+        const kos = Array.from(document.querySelectorAll('.sent-ko')).map(el => el.value.trim());
+
+        if(!title || jps.join('') === '') return alert('제목과 일본어 내용은 필수입니다.');
 
         const artId = isEditMode ? editingId : Date.now();
-        const newArt = { id: artId, title, jp, ko, date: new Date().toLocaleDateString() };
+        const newArt = { 
+            id: artId, 
+            title, 
+            jp: jps.join('\n'), 
+            ko: kos.join('\n'), 
+            date: new Date().toLocaleDateString() 
+        };
 
         if (isEditMode) {
             articles = articles.map(a => a.id === editingId ? newArt : a);
@@ -209,7 +193,7 @@
         document.querySelectorAll('.vocab-row').forEach(row => {
             const word = row.querySelector('.voc-w').value.trim();
             const sent = row.querySelector('.voc-s').value.trim();
-            if(word) vocabulary.unshift({ id: Date.now() + Math.random(), word, sent, articleId: artId });
+            if(word) vocabulary.push({ id: Date.now() + Math.random(), word, sent, articleId: artId });
         });
 
         localStorage.setItem('my_articles', JSON.stringify(articles));
@@ -219,23 +203,9 @@
         selectArticle(artId);
     }
 
-    // 삭제 기능
-    function deleteArticle(id, event) {
-        event.stopPropagation();
-        if(!confirm('기사와 해당 단어들을 모두 삭제할까요?')) return;
-        articles = articles.filter(a => a.id !== id);
-        vocabulary = vocabulary.filter(v => v.articleId !== id);
-        localStorage.setItem('my_articles', JSON.stringify(articles));
-        localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
-        currentArticleId = null;
-        renderArticles();
-        document.getElementById('viewer').innerHTML = '<div style="text-align:center; color:var(--muted); margin-top:100px;">기사를 선택해 주세요.</div>';
-    }
-
-    // 렌더링
     function renderArticles() {
         const list = document.getElementById('articleList');
-        if(articles.length === 0) { list.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted);">작성된 기사가 없습니다.</div>'; return; }
+        if(articles.length === 0) { list.innerHTML = '<div style="padding:20px; text-align:center; color:var(--muted);">기사가 없습니다.</div>'; return; }
         list.innerHTML = articles.map(a => `
             <div class="list-item ${currentArticleId === a.id ? 'active' : ''}" onclick="selectArticle(${a.id})">
                 <div class="title">${a.title}</div>
@@ -252,39 +222,32 @@
         currentArticleId = id;
         const art = articles.find(a => a.id === id);
         renderArticles();
-        document.getElementById('viewer').innerHTML = `<h2>${art.title}</h2><div class="jp-text">${art.jp}</div><div class="ko-text">${art.ko}</div>`;
+        // 줄바꿈을 <br>로 변환하여 출력
+        document.getElementById('viewer').innerHTML = `<h2>${art.title}</h2><div class="jp-text">${art.jp.replace(/\n/g, '<br>')}</div><div class="ko-text">${art.ko.replace(/\n/g, '<br>')}</div>`;
     }
 
-    // 단어장 정렬 및 렌더링
-    function renderFullVocab(data = null) {
+    function renderFullVocab() {
         const list = document.getElementById('fullVocabList');
-        const count = document.getElementById('vocabCount');
-        const displayData = data || vocabulary;
+        // 일본어 정렬 고정 (localeCompare 사용)
+        const sorted = [...vocabulary].sort((a, b) => a.word.localeCompare(b.word, 'ja'));
         
-        count.innerText = `총 ${displayData.length}개`;
-        if (displayData.length === 0) { list.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--muted);">저장된 단어가 없습니다.</div>'; return; }
-        
-        list.innerHTML = displayData.map(v => `
-            <div class="vocab-card">
-                <div class="vocab-word">${v.word}</div>
-                <div class="vocab-sent">${v.sent}</div>
-            </div>
-        `).join('');
+        document.getElementById('vocabCount').innerText = `(총 ${sorted.length}개)`;
+        list.innerHTML = sorted.length === 0 ? '<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--muted);">단어가 없습니다.</div>' : 
+            sorted.map(v => `<div class="vocab-card"><div class="vocab-word">${v.word}</div><div class="vocab-sent">${v.sent}</div></div>`).join('');
     }
 
-    function sortVocab(type) {
-        let sorted = [...vocabulary];
-        if (type === 'alpha') {
-            // 아카사타나(오십음도) 정렬
-            sorted.sort((a, b) => a.word.localeCompare(b.word, 'ja'));
-        } else {
-            // 등록일순 (최신순)
-            sorted.sort((a, b) => b.id - a.id);
-        }
-        renderFullVocab(sorted);
+    function deleteArticle(id, event) {
+        event.stopPropagation();
+        if(!confirm('삭제하시겠습니까?')) return;
+        articles = articles.filter(a => a.id !== id);
+        vocabulary = vocabulary.filter(v => v.articleId !== id);
+        localStorage.setItem('my_articles', JSON.stringify(articles));
+        localStorage.setItem('my_vocabulary', JSON.stringify(vocabulary));
+        currentArticleId = null;
+        goMain();
     }
 
-    window.onload = () => { renderArticles(); if(articles.length > 0) selectArticle(articles[0].id); };
+    window.onload = () => { goMain(); if(articles.length > 0) selectArticle(articles[0].id); };
 </script>
 </body>
 </html>
