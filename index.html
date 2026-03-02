@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본어 학습 독학 노트</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:#f5f6fa; --surface:#ffffff; --border:#e2e4ec;
+            --text:#1e1f2e; --muted:#9395a5; --accent:#6c63ff; --blue:#3b82f6; --green:#22c55e;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Nunito','Noto Sans KR','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text); overflow:hidden; height:100vh; }
+        
+        /* Layout */
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        .topbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--accent); }
+        
+        .main-content { display: grid; grid-template-columns: 320px 1fr 320px; flex: 1; overflow: hidden; gap: 1px; background: var(--border); }
+        .panel { background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; }
+        
+        /* List Style */
+        .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .list-item:hover { background: #f8f9ff; }
+        .list-item.active { border-left: 4px solid var(--accent); background: #f0f1ff; }
+        .list-item .title { font-weight: 700; font-size: 0.9rem; margin-bottom: 5px; }
+        .list-item .date { font-size: 0.75rem; color: var(--muted); }
+
+        /* Article View */
+        .viewer { padding: 30px; overflow-y: auto; line-height: 2.2; font-size: 1.15rem; }
+        .translation { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border); color: #666; font-size: 1rem; }
+        .word-token { cursor: pointer; padding: 0 2px; border-radius: 4px; transition: 0.2s; }
+        .word-token:hover { background: rgba(108, 99, 255, 0.15); color: var(--accent); }
+
+        /* Vocabulary Sidebar */
+        .vocab-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .vocab-word { font-weight: 700; color: var(--accent); font-size: 1rem; }
+        .vocab-sentence { font-size: 0.75rem; color: var(--muted); margin-top: 4px; background: #f9f9f9; padding: 5px; border-radius: 4px; }
+
+        /* Buttons & Modals */
+        .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-family: inherit; font-size: 0.8rem; font-weight: 600; }
+        .btn-primary { background: var(--accent); color: white; border: none; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: var(--surface); padding: 25px; border-radius: 16px; width: 90%; max-width: 600px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 700; font-size: 0.85rem; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; }
+        textarea.form-control { height: 150px; resize: none; }
+
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="topbar">
+        <div class="logo">🇯🇵 일본어 공부 기록장</div>
+        <button class="btn btn-primary" onclick="openModal()">+ 새 기사 추가</button>
+    </div>
+
+    <div class="main-content">
+        <div class="panel">
+            <div class="panel-header">내 학습 기사</div>
+            <div id="articleList" style="overflow-y: auto;"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">학습 본문 (클릭 시 단어 저장)</div>
+            <div id="articleViewer" class="viewer">
+                <div class="empty-state">왼쪽에서 기사를 선택하거나 새 기사를 추가하세요.</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">저장된 단어 (전체)</div>
+            <div id="globalVocabList" style="overflow-y: auto; flex: 1;"></div>
+            <div style="padding: 15px; border-top: 1px solid var(--border);">
+                <button class="btn" style="width: 100%" onclick="exportCSV()">CSV로 내보내기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h3 style="margin-bottom: 20px;">새 일본어 본문 등록</h3>
+        <div class="form-group">
+            <label>제목</label>
+            <input type="text" id="formTitle" class="form-control" placeholder="예: NHK 뉴스 - 일본의 날씨">
+        </div>
+        <div class="form-group">
+            <label>일본어 본문</label>
+            <textarea id="formContent" class="form-control" placeholder="일본어 본문을 입력하세요..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>한국어 해석</label>
+            <textarea id="formTrans" class="form-control" placeholder="본문의 해석을 입력하세요..."></textarea>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn" onclick="closeModal()">취소</button>
+            <button class="btn btn-primary" onclick="saveArticle()">저장하기</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js"></script>
+
+<script>
+    let articles = JSON.parse(localStorage.getItem('jp_articles') || '[]');
+    let vocabulary = JSON.parse(localStorage.getItem('jp_vocab_list') || '[]');
+    let tokenizer = null;
+    let currentArticleId = null;
+
+    // 분석기 초기화
+    kuromoji.builder({ dicPath: "https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/" }).build((err, _tokenizer) => {
+        if (!err) tokenizer = _tokenizer;
+        renderArticleList();
+        renderVocabList();
+    });
+
+    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    function saveArticle() {
+        const title = document.getElementById('formTitle').value;
+        const content = document.getElementById('formContent').value;
+        const trans = document.getElementById('formTrans').value;
+
+        if(!title || !content) return alert("제목과 본문을 입력해주세요.");
+
+        const newArticle = { id: Date.now(), title, content, trans, date: new Date().toLocaleDateString() };
+        articles.unshift(newArticle);
+        localStorage.setItem('jp_articles', JSON.stringify(articles));
+        
+        renderArticleList();
+        closeModal();
+        // 폼 초기화
+        document.getElementById('formTitle').value = '';
+        document.getElementById('formContent').value = '';
+        document.getElementById('formTrans').value = '';
+    }
+
+    function renderArticleList() {
+        const list = document.getElementById('articleList');
+        list.innerHTML = articles.map(a => `
+            <div class="list-item ${currentArticleId === a.id ? 'active' : ''}" onclick="viewArticle(${a.id})">
+                <div class="title">${a.title}</div>
+                <div class="date">${a.date}</div>
+            </div>
+        `).join('');
+    }
+
+    function viewArticle(id) {
+        currentArticleId = id;
+        renderArticleList();
+        const article = articles.find(a => a.id === id);
+        const viewer = document.getElementById('articleViewer');
+        
+        viewer.innerHTML = `<div id="tokenizedContent">분석 중...</div><div class="translation">${article.trans.replace(/\n/g, '<br>')}</div>`;
+
+        if (tokenizer) {
+            const tokens = tokenizer.tokenize(article.content);
+            const container = document.getElementById('tokenizedContent');
+            container.innerHTML = '';
+            tokens.forEach(t => {
+                const span = document.createElement('span');
+                span.className = 'word-token';
+                span.innerText = t.surface_form;
+                span.onclick = () => addVocab(t.surface_form, article.content);
+                container.appendChild(span);
+            });
+        } else {
+            document.getElementById('tokenizedContent').innerText = article.content;
+        }
+    }
+
+    function addVocab(word, fullText) {
+        if(confirm(`'${word}' 단어를 단어장에 추가할까요?`)) {
+            const entry = {
+                id: Date.now(),
+                word: word,
+                sentence: fullText.split('。').find(s => s.includes(word))?.trim() + "。" || "문맥 없음",
+                date: new Date().toLocaleDateString()
+            };
+            vocabulary.unshift(entry);
+            localStorage.setItem('jp_vocab_list', JSON.stringify(vocabulary));
+            renderVocabList();
+        }
+    }
+
+    function renderVocabList() {
+        const list = document.getElementById('globalVocabList');
+        list.innerHTML = vocabulary.map(v => `
+            <div class="vocab-item">
+                <div class="vocab-word">${v.word}</div>
+                <div class="vocab-sentence">${v.sentence}</div>
+                <div style="font-size:0.7rem; color:#ccc; margin-top:5px;">${v.date}</div>
+            </div>
+        `).join('');
+    }
+
+    function exportCSV() {
+        let csv = "\uFEFF단어,쓰인문장,등록일\n";
+        vocabulary.forEach(v => csv += `"${v.word}","${v.sentence.replace(/"/g, '""')}","${v.date}"\n`);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `일본어_단어장_${new Date().toLocaleDateString()}.csv`;
+        a.click();
+    }
+</script>
+</body>
+</html>
