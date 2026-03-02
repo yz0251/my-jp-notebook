@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>일본어 독학 노트</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍥</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -29,7 +30,6 @@
         .list-item-btns { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: none; gap: 8px; background: inherit; padding-left: 10px; }
         .list-item:hover .list-item-btns { display: flex; }
 
-        /* [수정] 메인 뷰어 글자 크기 축소 */
         .viewer { padding: 40px 50px; overflow-y: auto; flex: 1; }
         .viewer h2 { font-size: 1.5rem; color: var(--text); line-height: 1.4; margin-bottom: 10px; }
         .title-trans { color: var(--muted); font-size: 1rem; margin-bottom: 40px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
@@ -39,7 +39,6 @@
 
         rt { font-family: 'Noto Sans JP', sans-serif; font-size: 0.55em; color: var(--accent); font-weight: 400; }
 
-        /* 본문 하단 단어 노트 크기 조정 */
         .article-vocab-note { margin-top: 60px; padding-top: 30px; border-top: 2px solid var(--border); }
         .article-vocab-note h3 { font-size: 1.1rem; color: var(--accent); margin-bottom: 20px; }
         .mini-vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
@@ -112,7 +111,7 @@
 
 <div id="editScreen">
     <div class="topbar">
-        <div class="logo" onclick="goMain()">🔙 뒤로가기</div>
+        <div class="logo" onclick="history.back()">🔙 뒤로가기</div>
         <button class="btn btn-primary" onclick="saveData()">저장 완료</button>
     </div>
     <div class="full-container">
@@ -137,7 +136,7 @@
 
 <div id="vocabScreen">
     <div class="topbar">
-        <div class="logo" onclick="goMain()">🔙 메인으로</div>
+        <div class="logo" onclick="history.back()">🔙 메인으로</div>
         <div style="font-weight:bold; color:var(--accent); font-size:0.9rem;">일본어 가나다순 정렬</div>
     </div>
     <div class="full-container">
@@ -155,10 +154,31 @@
     let isEditMode = false;
     let editingId = null;
 
-    function goMain() { document.getElementById('editScreen').style.display='none'; document.getElementById('vocabScreen').style.display='none'; document.getElementById('mainScreen').style.display='flex'; renderArticles(); }
+    // [신규] 브라우저 뒤로가기 대응 로직
+    window.onpopstate = function() {
+        goMainInternal();
+    };
+
+    function goMainInternal() {
+        document.getElementById('editScreen').style.display='none'; 
+        document.getElementById('vocabScreen').style.display='none'; 
+        document.getElementById('mainScreen').style.display='flex'; 
+        renderArticles();
+    }
+
+    function goMain() {
+        // 명시적으로 뒤로 가거나 취소할 때 사용
+        if (document.getElementById('mainScreen').style.display === 'none') {
+            history.back();
+        }
+    }
+
     function goEdit(id = null) {
-        document.getElementById('mainScreen').style.display='none'; document.getElementById('editScreen').style.display='flex';
-        document.getElementById('sentenceInputs').innerHTML=''; document.getElementById('vocabInputs').innerHTML='';
+        history.pushState({page: "edit"}, "Edit", "#edit");
+        document.getElementById('mainScreen').style.display='none'; 
+        document.getElementById('editScreen').style.display='flex';
+        document.getElementById('sentenceInputs').innerHTML=''; 
+        document.getElementById('vocabInputs').innerHTML='';
         if (id) {
             isEditMode=true; editingId=id;
             const art=articles.find(a=>a.id===id);
@@ -167,7 +187,13 @@
             vocabulary.filter(v=>v.articleId===id).forEach(v=>addVocabRow(v.word, v.mean, v.sent));
         } else { isEditMode=false; editingId=null; document.getElementById('editTitle').value=''; document.getElementById('editTitleKo').value=''; addSentenceRow(); addVocabRow(); }
     }
-    function goVocab() { document.getElementById('mainScreen').style.display='none'; document.getElementById('vocabScreen').style.display='flex'; renderFullVocab(); }
+
+    function goVocab() { 
+        history.pushState({page: "vocab"}, "Vocab", "#vocab");
+        document.getElementById('mainScreen').style.display='none'; 
+        document.getElementById('vocabScreen').style.display='flex'; 
+        renderFullVocab(); 
+    }
 
     function processJapaneseText(text) {
         if(!text) return "";
@@ -214,7 +240,11 @@
             if(w) vocabulary.push({id:Date.now()+Math.random(), word:w, mean:m, sent:t?`${s} | ${t}`:s, articleId:artId});
         });
         localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary));
-        currentArticleId=artId; goMain(); selectArticle(artId);
+        currentArticleId=artId; 
+        
+        // 저장 후 메인으로 돌아갈 때는 히스토리 꼬이지 않게 pushState 기록 없이 메인 표시
+        goMainInternal(); 
+        selectArticle(artId);
     }
 
     function selectArticle(id) {
@@ -255,8 +285,14 @@
         }).join('');
     }
 
-    function deleteArticle(id,e) { e.stopPropagation(); if(confirm('삭제하시겠습니까?')){ articles=articles.filter(a=>a.id!==id); vocabulary=vocabulary.filter(v=>v.articleId!==id); localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); currentArticleId=null; goMain(); }}
-    window.onload=()=>{ goMain(); if(articles.length>0) selectArticle(articles[0].id); };
+    function deleteArticle(id,e) { e.stopPropagation(); if(confirm('삭제하시겠습니까?')){ articles=articles.filter(a=>a.id!==id); vocabulary=vocabulary.filter(v=>v.articleId!==id); localStorage.setItem('my_articles',JSON.stringify(articles)); localStorage.setItem('my_vocabulary',JSON.stringify(vocabulary)); currentArticleId=null; goMainInternal(); }}
+    
+    // 초기 로딩 시 히스토리 상태 초기화
+    window.onload=()=>{ 
+        history.replaceState({page: "main"}, "Main", "");
+        goMainInternal(); 
+        if(articles.length>0) selectArticle(articles[0].id); 
+    };
 </script>
 </body>
 </html>
